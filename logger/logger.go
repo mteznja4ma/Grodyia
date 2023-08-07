@@ -1,4 +1,5 @@
-package logger 
+package logger
+
 import (
 	"container/list"
 	"fmt"
@@ -10,7 +11,7 @@ import (
 	"time"
 
 	"grodyia/util"
-	colorPrint "grodyia/util/color_print"
+	colorPrint "grodyia/util/colorprint"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -26,26 +27,24 @@ const (
 	FatalLevel   = 5
 )
 
-type (
-	LogInfo struct {
-		File      string
-		Line      int
-		Classname string
-		Level     int
-		LogStr    string
-		TimeNs    int64
-	}
-)
+type Logger struct {
+	File      string
+	Line      int
+	Classname string
+	Level     int
+	LogStr    string
+	TimeNs    int64
+}
 
 var (
-	contextLogger  *logrus.Entry   = nil
-	logDir                         = ""
-	screenPrint                    = 1
-	MinLevel                       = 0 // logout more than this level
-	chanPrint                      = make(chan LogInfo, 100)
-	cb             func(i LogInfo) = nil
-	tmpLogList                     = list.New()
-	maxTmpLogCount                 = 100000
+	contextLogger  *logrus.Entry  = nil
+	logDir                        = ""
+	screenPrint                   = 1
+	MinLevel                      = 0 // logout more than this level
+	chanPrint                     = make(chan Logger, 100)
+	cb             func(i Logger) = nil
+	tmpLogList                    = list.New()
+	maxTmpLogCount                = 100000
 	mxTemLogList   sync.Mutex
 
 	levelName = map[int]string{
@@ -122,7 +121,7 @@ func New(directoty string) error {
  *
  * @return (error)
  **/
-func SetCallback(c func(i LogInfo)) {
+func SetCallback(c func(i Logger)) {
 	if cb != nil && c != nil {
 		return
 	}
@@ -130,7 +129,7 @@ func SetCallback(c func(i LogInfo)) {
 	if cb != nil {
 		mxTemLogList.Lock()
 		for e := tmpLogList.Front(); e != nil; {
-			c(e.Value.(LogInfo))
+			c(e.Value.(Logger))
 			e = e.Next()
 		}
 		tmpLogList.Init()
@@ -213,7 +212,7 @@ func printLog(classname, file, format string, line, level int, a ...interface{})
 	// merge log
 	if screenPrint != 0 || level >= ErrorLevel || cb == nil {
 		logStr := fmt.Sprintf(nowTimeString()+GetLogLevelStr(level)+format, a...)
-		chanPrint <- LogInfo{
+		chanPrint <- Logger{
 			LogStr: logStr,
 			Level:  level,
 		}
@@ -239,7 +238,7 @@ func printLog(classname, file, format string, line, level int, a ...interface{})
 	}
 
 	// save logInfo
-	logInfo := LogInfo{
+	logInfo := Logger{
 		File:      file,
 		Line:      line,
 		Classname: classname,

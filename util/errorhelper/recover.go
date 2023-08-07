@@ -1,4 +1,4 @@
-package error_helper
+package errorhelper
 
 import (
 	"runtime/debug"
